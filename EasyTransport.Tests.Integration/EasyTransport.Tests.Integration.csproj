@@ -1,0 +1,89 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{65BE63B3-49EC-4632-9EE4-0646E81A75CE}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>EasyTransport.Tests.Integration</RootNamespace>
+    <AssemblyName>EasyTransport.Tests.Integration</AssemblyName>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="nunit.framework, Version=3.4.1.0, Culture=neutral, PublicKeyToken=2638cd05610744eb, processorArchitecture=MSIL">
+      <HintPath>..\packages\NUnit.3.4.1\lib\net45\nunit.framework.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Shouldly, Version=2.8.1.0, Culture=neutral, PublicKeyToken=6042cbcb05cbc941, processorArchitecture=MSIL">
+      <HintPath>..\packages\Shouldly.2.8.1\lib\net40\Shouldly.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Performance\UdpListenerPerformanceTests.cs" />
+    <Compile Include="Performance\WebSocketPerformanceTests.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Udp\UdpListenerTests.cs" />
+    <Compile Include="WebSocket\BroadcastingTests.cs" />
+    <Compile Include="WebSocket\ConnectingClientToServerTests.cs" />
+    <Compile Include="WebSocket\ConnectingClientWithQueryStringsToServerTests.cs" />
+    <Compile Include="WebSocket\Context.cs" />
+    <Compile Include="WebSocket\SendingMessagesBothWaysTests.cs" />
+    <Compile Include="WebSocket\SendingMessagesFromClientToServerTests.cs" />
+    <Compile Include="WebSocket\SendingMessagesFromServerToClientTests.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\EasyTransport.Common\EasyTransport.Common.csproj">
+      <Project>{D408A2E0-7AF4-48A6-ADD2-8E4C6C267867}</Project>
+      <Name>EasyTransport.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\EasyTransport.Udp\EasyTransport.Udp.csproj">
+      <Project>{42DDBEA1-A2F6-47E1-9461-F76C08CC547B}</Project>
+      <Name>EasyTransport.Udp</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\EasyTransport.WebSocket.Client\EasyTransport.WebSocket.Client.csproj">
+      <Project>{77559693-68EE-4234-B3BA-CA4AEE54DB3D}</Project>
+      <Name>EasyTransport.WebSocket.Client</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\EasyTransport.WebSocket.Server\EasyTransport.WebSocket.Server.csproj">
+      <Project>{8F9C5A57-F4AA-44B2-8013-AE91A7E0FF13}</Project>
+      <Name>EasyTransport.WebSocket.Server</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
