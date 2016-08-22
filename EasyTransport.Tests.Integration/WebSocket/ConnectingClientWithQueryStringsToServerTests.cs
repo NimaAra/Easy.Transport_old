@@ -46,7 +46,7 @@
 
             serverEvents.ShouldBeEmpty();
 
-            Client.ConnectAsync();
+            await Client.ConnectAsync();
             await Task.Delay(2000);
 
             Client.State.ShouldBe(WebSocketClientState.Connected);

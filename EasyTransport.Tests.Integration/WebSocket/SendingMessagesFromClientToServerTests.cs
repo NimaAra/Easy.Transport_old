@@ -30,7 +30,7 @@
 
             await Server.StartAsync();
 
-            Client.ConnectAsync();
+            await Client.ConnectAsync();
             await Task.Delay(2000);
 
             Server.Manager.Ids.Count.ShouldBe(1);

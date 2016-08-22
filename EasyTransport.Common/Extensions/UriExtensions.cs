@@ -8,7 +8,7 @@
     /// <summary>
     /// Provides a set of helper classes when working with <see cref="Uri"/>.
     /// </summary>
-    public static class UriExtensions
+    internal static class UriExtensions
     {
         private static readonly Regex QueryStringRegex = new Regex(@"[?|&]([\w\.-]+)=([^?|^&]+)", RegexOptions.Compiled);
 

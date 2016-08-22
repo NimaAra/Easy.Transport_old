@@ -2,11 +2,15 @@
 {
     using System;
     using System.IO;
+    using System.Threading;
+    using System.Threading.Tasks;
     using EasyTransport.Common;
     using EasyTransport.Common.Extensions;
     using EasyTransport.Common.Helpers;
     using EasyTransport.Common.Models.Events;
     using WebSocket4Net;
+    using WebSocket = WebSocket4Net.WebSocket;
+    using WebSocketState = WebSocket4Net.WebSocketState;
 
     /// <summary>
     /// Represents a web-socket client.
@@ -15,6 +19,8 @@
     {
         private readonly WebSocket _client;
         private volatile bool _disposing;
+        private readonly TaskCompletionSource<object> _tcs;
+        private readonly ManualResetEventSlim _waitHandle;
 
         /// <summary>
         /// Creates an instance of the <see cref="Client"/>.
@@ -26,7 +32,7 @@
         public WebSocketClient(Uri endpoint, bool autoReconnect = false)
         {
             Ensure.NotNull(endpoint, nameof(endpoint));
-
+            
             const StringComparison CmpPolicy = StringComparison.OrdinalIgnoreCase;
             var scheme = endpoint.Scheme;
             Ensure.That(scheme.Equals("WS", CmpPolicy) || scheme.Equals("WSS", CmpPolicy),
@@ -43,6 +49,9 @@
                 ReceiveBufferSize = 1024,
                 NoDelay = false // Enables Nagle Algorithm
             };
+
+            _tcs = new TaskCompletionSource<object>();
+            _waitHandle = new ManualResetEventSlim(true);
 
             SetupSocketHandlers(_client);
         }
@@ -99,10 +108,12 @@
         /// <summary>
         /// Connects the client to the WebSocket server specified by <see cref="Endpoint"/>.
         /// </summary>
-        public void ConnectAsync()
+        public Task ConnectAsync()
         {
-            OnEvent?.Invoke(this, new ConnectingEvent(Id));
-            _client.Open();
+            if (State != WebSocketClientState.Disconnected) { return _tcs.Task; }
+
+            ConnectImpl();
+            return _tcs.Task;
         }
 
         /// <summary>
@@ -110,6 +121,7 @@
         /// </summary>
         public void Send(string data)
         {
+            _waitHandle.Wait();
             _client.Send(data);
         }
 
@@ -118,6 +130,7 @@
         /// </summary>
         public void Send(byte[] data)
         {
+            _waitHandle.Wait();
             _client.Send(data, 0, data.Length);
         }
 
@@ -132,7 +145,8 @@
             Ensure.That<InvalidOperationException>(
                 read == buffer.Length, 
                 $"The bytes read does not match length of data, read: {read} source: {buffer.Length}");
-            
+
+            _waitHandle.Wait();
             _client.Send(buffer, 0, read);
         }
 
@@ -143,6 +157,7 @@
         {
             _disposing = true;
             _client.Dispose();
+            _waitHandle.Dispose();
         }
 
         /// <summary>
@@ -164,12 +179,22 @@
 
         private void SetupSocketHandlers(WebSocket client)
         {
-            client.Opened += (sender, args) => OnEvent?.Invoke(this, new ConnectedEvent(Id));
-            client.Error += (sender, args) => OnEvent?.Invoke(this, new ErrorEvent(Id, args.Exception, args.Exception.Message));
+            client.Opened += (sender, args) =>
+            {
+                _tcs.TrySetResult(null);
+                OnEvent?.Invoke(this, new ConnectedEvent(Id));
+            };
+
+            client.Error += (sender, args) =>
+            {
+                _tcs.TrySetException(args.Exception);
+                OnEvent?.Invoke(this, new ErrorEvent(Id, args.Exception, args.Exception.Message));
+            };
+
             client.MessageReceived += (sender, args) => OnEvent?.Invoke(this, new PayloadEvent(Id, PayloadType.Text, args.Message, null));
             client.DataReceived += (sender, args) =>
             {
-                if (args.Data.IsPing()) { Ping(); }
+                if (args.Data.IsPing()) { Pong(); }
                 else
                 {
                     OnEvent?.Invoke(this, new PayloadEvent(Id, PayloadType.Binary, null, args.Data));
@@ -190,15 +215,23 @@
             };
         }
 
+        private void ConnectImpl()
+        {
+            OnEvent?.Invoke(this, new ConnectingEvent(Id));
+            _client.Open();
+        }
+
         private void HandleReconnect()
         {
             if (_disposing || !AutoReconnect) { return; }
-            ConnectAsync();
+            ConnectImpl();
         }
 
-        private void Ping()
+        private void Pong()
         {
+            _waitHandle.Reset();
             _client.Send(Constants.OpCode_Pong, 0, Constants.OpCode_Pong.Length);
+            _waitHandle.Set();
         }
     }
 }

@@ -1,7 +1,9 @@
 ﻿namespace EasyTransport.WebSocket.Server
 {
     using System;
+    using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using System.Net;
     using System.Text;
     using System.Threading;
@@ -61,6 +63,7 @@
         /// </summary>
         public Task StartAsync()
         {
+            ((WebSocketSessionManager)Manager).OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Server starting...");
             var cToken = _cTokenSource.Token;
             _listener.Start();
             return AcceptClientsAsync(_listener, cToken);
@@ -73,7 +76,9 @@
         {
             _cTokenSource.Cancel();
             _listener.Dispose();
+            ((WebSocketSessionManager)Manager).OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Server disposing...");
             ((WebSocketSessionManager)Manager).Dispose();
+            ((WebSocketSessionManager)Manager).OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Server disposed.");
             _pcQueue.Dispose();
             _cTokenSource.Dispose();
         }
@@ -104,6 +109,8 @@
             {
                 try
                 {
+                    ((WebSocketSessionManager)Manager).OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Server started.");
+
                     while (!cToken.IsCancellationRequested)
                     {
                         var client = await listener.AcceptWebSocketAsync(cToken).ConfigureAwait(false);
@@ -116,6 +123,8 @@
                 {
                     OnError?.Invoke(new WebSocketServerException("Exception when accepting clients", e));
                 }
+
+                ((WebSocketSessionManager)Manager).OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Server stopped listening.");
             }, cToken, TaskCreationOptions.LongRunning | TaskCreationOptions.DenyChildAttach, TaskScheduler.Default);
         }
 
@@ -123,10 +132,11 @@
         {
             if (client == null) { return; }
 
-            var clientId = GetClientId(client);
+            var queryStrings = GetQueryStrings(client);
+            var clientId = GetClientId(queryStrings);
             ((WebSocketSessionManager)Manager).Add(clientId, client);
 
-            OnEvent?.Invoke(this, new ClientConnectedEvent(clientId, client.RemoteEndpoint));
+            OnEvent?.Invoke(this, new ClientConnectedEvent(clientId, client.RemoteEndpoint, queryStrings));
 
             var cleanExit = false;
             try
@@ -186,22 +196,27 @@
             }
         }
 
-        // [ToDo] push this inside negotiation
-
-        private static Guid GetClientId(WebSocket client)
+        private static Dictionary<string, string> GetQueryStrings(WebSocket client)
         {
-            var clientId = Guid.Empty;
-            foreach (var item in client.HttpRequest.RequestUri.ParseQueryString())
+            return client.HttpRequest.RequestUri.ParseQueryString().ToDictionary(kv => kv.Key, kv => kv.Value);
+        }
+        
+        // [ToDo] push this inside negotiation
+        private static Guid GetClientId(Dictionary<string, string> queryStrings)
+        {
+            string clientIdStr;
+            if (!queryStrings.Any() || !queryStrings.TryGetValue(Constants.ClientRequestedIdKey, out clientIdStr))
             {
-                if (item.Key.Equals(Constants.ClientRequestedIdKey, StringComparison.OrdinalIgnoreCase))
-                {
-                    Guid.TryParse(item.Value, out clientId);
-                    break;
-                }
+                return Guid.NewGuid();
             }
 
-            if (clientId == Guid.Empty) { clientId = Guid.NewGuid(); }
-            return clientId;
+            Guid clientGuid;
+            if (!Guid.TryParse(clientIdStr, out clientGuid))
+            {
+                return Guid.NewGuid();
+            }
+
+            return clientGuid;
         }
 
         private static void SendPong(WebSocket client)

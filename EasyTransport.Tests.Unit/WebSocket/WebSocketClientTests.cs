@@ -60,7 +60,9 @@
             };
             client.State.ShouldBe(WebSocketClientState.Disconnected);
 
-            client.ConnectAsync();
+            Should.Throw<SocketException>(async () => await client.ConnectAsync())
+                .Message.ShouldBe("No such host is known");
+
             client.State.ShouldBe(WebSocketClientState.Connecting);
 
             await Task.Delay(5000);
@@ -119,8 +121,10 @@
             };
             client.State.ShouldBe(WebSocketClientState.Disconnected);
 
-            client.ConnectAsync();
-            client.State.ShouldBe(WebSocketClientState.Connecting);
+            Should.Throw<SocketException>(async () => await client.ConnectAsync())
+                .Message.ShouldBe("No such host is known");
+
+            client.State.ShouldBe(WebSocketClientState.Disconnected);
 
             await Task.Delay(5000);
 

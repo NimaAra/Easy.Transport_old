@@ -2,6 +2,7 @@
 {
     using System;
     using System.IO;
+    using System.Threading.Tasks;
     using EasyTransport.Common.Models.Events;
 
     /// <summary>
@@ -42,7 +43,7 @@
         /// <summary>
         /// Connects the client to the WebSocket server specified by <see cref="Endpoint"/>.
         /// </summary>
-        void ConnectAsync();
+        Task ConnectAsync();
 
         /// <summary>
         /// Send the <paramref name="data"/> to the server.

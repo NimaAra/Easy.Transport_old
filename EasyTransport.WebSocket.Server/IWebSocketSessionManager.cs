@@ -10,6 +10,12 @@
     public interface IWebSocketSessionManager
     {
         /// <summary>
+        /// Registers a call-back to invoke when the server has a log message.
+        /// </summary>
+        /// <param name="callback"></param>
+        void RegisterLogHandler(Action<string> callback);
+
+        /// <summary>
         /// Gets the period of inactivity before a session is closed by the server.
         /// </summary>
         TimeSpan InactivityTimeout { get; }

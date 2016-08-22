@@ -35,21 +35,14 @@
         internal void Add(Guid id, WebSocket client)
         {
             _sessions[id] = new WebSocketSession(client);
+            OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Added: {id}");
         }
 
         internal void Remove(Guid id)
         {
-            _sequencer.Add(() =>
-            {
-                WebSocketSession removed;
-                _sessions.TryRemove(id, out removed);
-            });
-        }
-
-        public void Dispose()
-        {
-            _sequencer.Dispose();
-            lock (_locker) { _sessions.Clear(); }
+            WebSocketSession removed;
+            _sessions.TryRemove(id, out removed);
+            OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Removed: {id}");
         }
 
         internal void KeepAlive(Guid id)
@@ -69,12 +62,12 @@
 
             _sequencer.Add(() =>
             {
-                Console.WriteLine($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Sending broad ping...");
-                foreach (var session in sessions)
+                OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Sessions: {sessions.Count} - Sending broad ping...");
+                foreach (var item in sessions)
                 {
-                    SendAsync(session.Key, Constants.OpCode_Ping);
+                    SendAsync(item.Key, Constants.OpCode_Ping);
                 }
-                Console.WriteLine($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Sent broad ping.");
+                OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Sessions: {sessions.Count} - Sent broad ping.");
 
                 _broadPingTimer.Change(_broadPingTimerInterval, Timeout.InfiniteTimeSpan);
             });
@@ -86,19 +79,19 @@
 
             _sequencer.Add(() =>
             {
-                Console.WriteLine($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Looking for a kill...");
+                OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Sessions: {sessions.Count} - Sweeping dead sessions...");
                 foreach (var session in sessions)
                 {
                     if (session.Value.PeriodFromLastPong >= InactivityTimeout)
                     {
                         WebSocketSession removed;
                         _sessions.TryRemove(session.Key, out removed);
-                        Console.WriteLine($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Removing: {session.Key} - InActivityTimeout: {InactivityTimeout}");
+                        OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Removing: {session.Key} - InActivityTimeout: {InactivityTimeout}");
                         try { session.Value.Client.Close(); } catch { /* ignored */ }
-                        Console.WriteLine($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Removed: {session.Key}");
+                        OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Removed: {session.Key}");
                     }
                 }
-                Console.WriteLine($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Looked for a kill.");
+                OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Sessions: {sessions.Count} - Swept dead sessions.");
 
                 _killInactiveTimer.Change(InactivityTimeout, Timeout.InfiniteTimeSpan);
             });
@@ -125,6 +118,23 @@
             session = tmpSession;
             return true;
         }
+
+        private void CloseImpl(Guid id, WebSocket client)
+        {
+            try
+            {
+                OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Closing: {id}...");
+                client.Close();
+                OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Closed: {id}.");
+            }
+            finally
+            {
+                client.Dispose();
+                OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Disposed: {id}.");
+            }
+        }
+
+        internal Action<string> OnLog { get; private set; }
 
         /// <summary>
         /// Gets the period of inactivity before a session is closed by the server.
@@ -221,11 +231,46 @@
         {
             _sequencer.Add(() =>
             {
-                WebSocketSession removed;
-                if (!_sessions.TryRemove(id, out removed)) { return; }
+                OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Attempting to close: {id}, ...");
 
-                try { removed.Client.Close(); } finally { removed.Client.Dispose(); }
+                WebSocketSession removed;
+                if (!_sessions.TryRemove(id, out removed))
+                {
+                    OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Attempting to close: {id}, Id not found in the sessions.");
+                    return;
+                }
+
+                CloseImpl(id, removed.Client);
             });
+        }
+
+        /// <summary>
+        /// Registers a call-back to invoke when the server has a log message.
+        /// </summary>
+        /// <param name="callback"></param>
+        public void RegisterLogHandler(Action<string> callback)
+        {
+            Ensure.NotNull(callback, nameof(callback));
+            OnLog = callback;
+        }
+
+        /// <summary>
+        /// Releases all the resources used by the <see cref="WebSocketSessionManager"/>.
+        /// </summary>
+        public void Dispose()
+        {
+            OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - SessionManager disposing...");
+            _sequencer.Dispose();
+            lock (_locker)
+            {
+                foreach (var item in _sessions)
+                {
+                    CloseImpl(item.Key, item.Value.Client);
+                }
+
+                _sessions.Clear();
+            }
+            OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - SessionManager disposed.");
         }
     }
 }

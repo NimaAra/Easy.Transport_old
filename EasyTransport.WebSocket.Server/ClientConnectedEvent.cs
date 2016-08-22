@@ -1,6 +1,7 @@
 ﻿namespace EasyTransport.WebSocket.Server
 {
     using System;
+    using System.Collections.Generic;
     using System.Net;
     using EasyTransport.Common.Models.Events;
 
@@ -9,14 +10,20 @@
     /// </summary>
     public sealed class ClientConnectedEvent : ConnectedEvent
     {
-        internal ClientConnectedEvent(Guid id, EndPoint remoteEndpoint) : base(id)
+        internal ClientConnectedEvent(Guid id, IPEndPoint remoteEndpoint, Dictionary<string, string> queryStrings) : base(id)
         {
             RemoteEndpoint = remoteEndpoint;
+            QueryStrings = queryStrings;
         }
 
         /// <summary>
         /// Gets the endpoint from which the connection is coming from.
         /// </summary>
-        public EndPoint RemoteEndpoint { get; }
+        public IPEndPoint RemoteEndpoint { get; }
+
+        /// <summary>
+        /// Gets the query strings sent by the client.
+        /// </summary>
+        public Dictionary<string, string> QueryStrings { get; }
     }
 }

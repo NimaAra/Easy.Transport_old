@@ -50,9 +50,9 @@
                     }
                 };
 
-                Console.WriteLine($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Server starting...");
+                server.Manager.RegisterLogHandler(msg => Console.WriteLine("Server -> " + msg));
+
                 await server.StartAsync();
-                Console.WriteLine($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Server started.");
 
                 var clients = Enumerable
                     .Range(1, ClientCount)
@@ -101,7 +101,7 @@
                 Console.WriteLine($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Disposing clients...");
                 Array.ForEach(clients, c =>
                 {
-                    c.Dispose();
+                    //c.Dispose();
                 });
                 Console.WriteLine($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Disposed clients.");
 

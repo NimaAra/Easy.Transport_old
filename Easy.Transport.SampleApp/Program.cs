@@ -35,6 +35,8 @@
                     }
                 };
 
+                server.Manager.RegisterLogHandler(msg => Console.WriteLine($"[Server -> {msg}"));
+
                 server.StartAsync();
 
                 var timer = new Timer(x =>

@@ -2,7 +2,9 @@
 {
     using System.Collections.Generic;
     using System.Linq;
+    using System.Net;
     using System.Threading.Tasks;
+    using EasyTransport.Common;
     using EasyTransport.Common.Models.Events;
     using EasyTransport.WebSocket.Client;
     using EasyTransport.WebSocket.Server;
@@ -31,7 +33,7 @@
 
             serverEvents.ShouldBeEmpty();
             
-            Client.ConnectAsync();
+            await Client.ConnectAsync();
             await Task.Delay(2000);
 
             Client.State.ShouldBe(WebSocketClientState.Connected);
@@ -49,7 +51,10 @@
             connectedEvent.Type.ShouldBe(WebSocketEventType.Connected);
             connectedEvent.Id.ShouldBe(sessionIdAtServer);
             connectedEvent.RemoteEndpoint.ShouldNotBeNull();
-            // [ToDo] proper test of remoteEndpoint
+            connectedEvent.RemoteEndpoint.Address.ShouldBe(IPAddress.Loopback);
+            connectedEvent.RemoteEndpoint.Port.ShouldNotBe(80, "It is some port opened by the server other than the one it's listening on.");
+            connectedEvent.QueryStrings.Count.ShouldBe(1);
+            connectedEvent.QueryStrings.Single().Key.ShouldBe(Constants.ClientRequestedIdKey);
         }
     }
 }
