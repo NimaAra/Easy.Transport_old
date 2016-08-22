@@ -36,6 +36,11 @@
         event EventHandler<WebSocketEventBase> OnEvent;
 
         /// <summary>
+        /// Gets the interval at which <see cref="IWebSocketClient"/> should send a <c>PING</c> interval to the server.
+        /// </summary>
+        TimeSpan PingInterval { get; }
+
+        /// <summary>
         /// Gets the endpoint to which the web-socket will be connecting to.
         /// </summary>
         Uri Endpoint { get; }

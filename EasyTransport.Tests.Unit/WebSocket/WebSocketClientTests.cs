@@ -20,7 +20,7 @@
         [TestCase("WsS://whatever.foo/bar")]
         public void When_creating_a_client_with_valid_endpoints(string endpoint)
         {
-            using (var client = new WebSocketClient(new Uri(endpoint)))
+            using (var client = new WebSocketClient(new Uri(endpoint), TimeSpan.FromSeconds(10)))
             {
                 client.ShouldNotBeNull();
                 client.Endpoint.ShouldNotBeNull();
@@ -37,7 +37,7 @@
         {
             Should.Throw<ArgumentException>(() =>
             {
-                new WebSocketClient(new Uri(endpoint));
+                new WebSocketClient(new Uri(endpoint), TimeSpan.FromSeconds(10));
             })
             .Message.ShouldBe($"The endpoint: {endpoint} is invalid, endpoint's scheme should be one of `ws` or `wss`");
         }
@@ -45,7 +45,7 @@
         [Test]
         public async Task When_creating_a_client_connecting_to_non_existing_endpoint_with_autoconnect()
         {
-            var client = new WebSocketClient(new Uri("ws://somewhere:80/Foo"), true);
+            var client = new WebSocketClient(new Uri("ws://somewhere:80/Foo"), TimeSpan.FromSeconds(10), true);
 
             client.Id.ShouldNotBe(Guid.Empty);
             client.AutoReconnect.ShouldBeTrue();
@@ -106,7 +106,7 @@
         public async Task When_creating_a_client_connecting_to_non_existing_endpoint_without_autoconnect()
         {
             // ReSharper disable once RedundantArgumentDefaultValue
-            var client = new WebSocketClient(new Uri("ws://somewhere:80/Foo"), false);
+            var client = new WebSocketClient(new Uri("ws://somewhere:80/Foo"), TimeSpan.FromSeconds(10), false);
 
             client.Id.ShouldNotBe(Guid.Empty);
             client.AutoReconnect.ShouldBeFalse();

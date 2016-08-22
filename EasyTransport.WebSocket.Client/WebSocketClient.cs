@@ -21,18 +21,22 @@
         private volatile bool _disposing;
         private readonly TaskCompletionSource<object> _tcs;
         private readonly ManualResetEventSlim _waitHandle;
+        private readonly Timer _pingTimer;
 
         /// <summary>
         /// Creates an instance of the <see cref="Client"/>.
         /// </summary>
         /// <param name="endpoint">The endpoint for the web-socket server to connect to</param>
+        /// <param name="pingInterval">
+        /// The interval at which the <see cref="WebSocketClient"/> should send a <c>PING</c> message to the server.
+        /// </param>
         /// <param name="autoReconnect">
         /// The flag indicating whether the <see cref="WebSocketClient"/> should attempt to automatically reconnect.
         /// </param>
-        public WebSocketClient(Uri endpoint, bool autoReconnect = false)
+        public WebSocketClient(Uri endpoint, TimeSpan pingInterval, bool autoReconnect = false)
         {
             Ensure.NotNull(endpoint, nameof(endpoint));
-            
+
             const StringComparison CmpPolicy = StringComparison.OrdinalIgnoreCase;
             var scheme = endpoint.Scheme;
             Ensure.That(scheme.Equals("WS", CmpPolicy) || scheme.Equals("WSS", CmpPolicy),
@@ -42,8 +46,11 @@
             AutoReconnect = autoReconnect;
             IsSecure = scheme.Equals("WSS", CmpPolicy); // [ToDo] Implement
             Endpoint = endpoint.AddParametersToQueryString(Constants.ClientRequestedIdKey, Id.ToString());
+            PingInterval = pingInterval;
+            _pingTimer = new Timer(state => { Ping(); }, null, Timeout.Infinite, Timeout.Infinite);
 
-            _client = new WebSocket(Endpoint.AbsoluteUri, "basic", userAgent: "Easy.Transport", version: WebSocketVersion.Rfc6455)
+            _client = new WebSocket(Endpoint.AbsoluteUri, "basic", userAgent: "Easy.Transport",
+                version: WebSocketVersion.Rfc6455)
             {
                 AllowUnstrustedCertificate = false,
                 ReceiveBufferSize = 1024,
@@ -101,6 +108,11 @@
         public event EventHandler<WebSocketEventBase> OnEvent;
 
         /// <summary>
+        /// Gets the interval at which <see cref="WebSocketClient"/> should send a <c>PING</c> interval to the server.
+        /// </summary>
+        public TimeSpan PingInterval { get; }
+
+        /// <summary>
         /// Gets the endpoint to which the web-socket will be connecting to.
         /// </summary>
         public Uri Endpoint { get; }
@@ -110,7 +122,10 @@
         /// </summary>
         public Task ConnectAsync()
         {
-            if (State != WebSocketClientState.Disconnected) { return _tcs.Task; }
+            if (State != WebSocketClientState.Disconnected)
+            {
+                return _tcs.Task;
+            }
 
             ConnectImpl();
             return _tcs.Task;
@@ -143,7 +158,7 @@
             var read = data.ReadAsync(buffer, 0, buffer.Length).Result; // [ToDo] make async
 
             Ensure.That<InvalidOperationException>(
-                read == buffer.Length, 
+                read == buffer.Length,
                 $"The bytes read does not match length of data, read: {read} source: {buffer.Length}");
 
             _waitHandle.Wait();
@@ -156,6 +171,7 @@
         public void Dispose()
         {
             _disposing = true;
+            _pingTimer.Dispose();
             _client.Dispose();
             _waitHandle.Dispose();
         }
@@ -182,6 +198,7 @@
             client.Opened += (sender, args) =>
             {
                 _tcs.TrySetResult(null);
+                Ping();
                 OnEvent?.Invoke(this, new ConnectedEvent(Id));
             };
 
@@ -191,10 +208,12 @@
                 OnEvent?.Invoke(this, new ErrorEvent(Id, args.Exception, args.Exception.Message));
             };
 
-            client.MessageReceived += (sender, args) => OnEvent?.Invoke(this, new PayloadEvent(Id, PayloadType.Text, args.Message, null));
+            client.MessageReceived +=
+                (sender, args) => OnEvent?.Invoke(this, new PayloadEvent(Id, PayloadType.Text, args.Message, null));
             client.DataReceived += (sender, args) =>
             {
                 if (args.Data.IsPing()) { Pong(); }
+                else if(args.Data.IsPong()) { /* do nothing for now */ }
                 else
                 {
                     OnEvent?.Invoke(this, new PayloadEvent(Id, PayloadType.Binary, null, args.Data));
@@ -205,8 +224,8 @@
             {
                 var justifiedClose = args as ClosedEventArgs;
 
-                var disconnectEvent = justifiedClose != null 
-                    ? new DisconnectedEvent(Id, justifiedClose.Code, justifiedClose.Reason) 
+                var disconnectEvent = justifiedClose != null
+                    ? new DisconnectedEvent(Id, justifiedClose.Code, justifiedClose.Reason)
                     : new DisconnectedEvent(Id, 10061);
 
                 OnEvent?.Invoke(this, disconnectEvent);
@@ -223,8 +242,27 @@
 
         private void HandleReconnect()
         {
-            if (_disposing || !AutoReconnect) { return; }
+            if (_disposing || !AutoReconnect)
+            {
+                return;
+            }
             ConnectImpl();
+        }
+
+        private void Ping()
+        {
+            _waitHandle.Reset();
+            
+            try
+            {
+                _pingTimer.Change(Timeout.Infinite, Timeout.Infinite);
+                if (State != WebSocketClientState.Connected) { return; }
+                _client.Send(Constants.OpCode_Ping, 0, Constants.OpCode_Ping.Length);
+            } finally
+            {
+                _pingTimer.Change(PingInterval, Timeout.InfiniteTimeSpan);
+                _waitHandle.Set();
+            }
         }
 
         private void Pong()

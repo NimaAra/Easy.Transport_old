@@ -56,7 +56,7 @@
 
                 var clients = Enumerable
                     .Range(1, ClientCount)
-                    .Select(n => new WebSocketClient(new Uri($"ws://localhost:{Port.ToString()}")))
+                    .Select(n => new WebSocketClient(new Uri($"ws://localhost:{Port.ToString()}"), TimeSpan.FromSeconds(10)))
                     .ToArray();
 
                 Console.WriteLine($"[{DateTime.UtcNow:HH:mm:ss.fff}] - {ClientCount} Clients starting...");

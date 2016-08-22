@@ -22,7 +22,7 @@
 
         internal WebSocket Client { get; }
 
-        internal TimeSpan PeriodFromLastPong
+        internal TimeSpan InactivityPeriod
         {
             get
             {

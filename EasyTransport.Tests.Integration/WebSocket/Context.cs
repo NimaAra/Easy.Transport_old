@@ -31,7 +31,7 @@
 
         protected void Given_a_websocket_client(string endpoint = "ws://localhost:80/")
         {
-            Client = new WebSocketClient(new Uri(endpoint));
+            Client = new WebSocketClient(new Uri(endpoint), TimeSpan.FromSeconds(10));
 
             Client.OnEvent += (sender, eArgs) => ClientEvents.Enqueue(eArgs);
         }

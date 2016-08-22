@@ -146,7 +146,7 @@
                     var msg = await client.ReadMessageAsync(cToken).ConfigureAwait(false);
                     if (msg != null)
                     {
-                        // Read
+                        ((WebSocketSessionManager)Manager).KeepAlive(clientId);
                         switch (msg.MessageType)
                         {
                             case WebSocketMessageType.Text:
@@ -164,7 +164,6 @@
                                     var receivedBytes = memStream.ToArray();
 
                                     if (receivedBytes.IsPing()) { SendPong(client); }
-                                    else if (receivedBytes.IsPong()) { ((WebSocketSessionManager)Manager).KeepAlive(clientId); }
                                     else
                                     {
                                         OnEvent?.Invoke(this, new PayloadEvent(clientId, PayloadType.Binary, null, receivedBytes));

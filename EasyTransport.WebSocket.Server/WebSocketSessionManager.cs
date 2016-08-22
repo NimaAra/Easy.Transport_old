@@ -16,33 +16,38 @@
     public sealed class WebSocketSessionManager : IWebSocketSessionManager, IDisposable
     {
         private readonly object _locker = new object();
+        private readonly TimeSpan _sessionsSweepInternval = TimeSpan.FromSeconds(5);
         private readonly ConcurrentDictionary<Guid, WebSocketSession> _sessions;
         private readonly ProducerConsumerQueue<Action> _sequencer;
-        private readonly Timer _broadPingTimer, _killInactiveTimer;
-        private readonly TimeSpan _broadPingTimerInterval = TimeSpan.FromSeconds(10);
+        private readonly Timer _killInactiveTimer;
 
         internal WebSocketSessionManager(TimeSpan sessionTimeout)
         {
-            Ensure.That(sessionTimeout > _broadPingTimerInterval);
-
             InactivityTimeout = sessionTimeout;
             _sessions = new ConcurrentDictionary<Guid, WebSocketSession>();
             _sequencer = new ProducerConsumerQueue<Action>(x => x(), 1, 4000);
-            _broadPingTimer = new Timer(SendBroadPingAsync, _sessions, _broadPingTimerInterval, Timeout.InfiniteTimeSpan);
-            _killInactiveTimer = new Timer(KillInactiveSessions, _sessions, InactivityTimeout, Timeout.InfiniteTimeSpan);
+            _sequencer.OnException += (sender, exception) =>
+            {
+                OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Internal Error: {exception.Message}");
+                throw new WebSocketServerException("Internal error", exception);
+            };
+
+            _killInactiveTimer = new Timer(KillInactiveSessions, _sessions, _sessionsSweepInternval, Timeout.InfiniteTimeSpan);
         }
 
         internal void Add(Guid id, WebSocket client)
         {
             _sessions[id] = new WebSocketSession(client);
-            OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Added: {id}");
+            OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Added: {id.ToString()}");
         }
 
         internal void Remove(Guid id)
         {
             WebSocketSession removed;
-            _sessions.TryRemove(id, out removed);
-            OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Removed: {id}");
+            if (_sessions.TryRemove(id, out removed))
+            {
+                OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Removed: {id.ToString()}");
+            }
         }
 
         internal void KeepAlive(Guid id)
@@ -56,44 +61,51 @@
             });
         }
 
-        private void SendBroadPingAsync(object state)
+        internal void SendBroadPingAsync(object state)
         {
-            var sessions = (ConcurrentDictionary<Guid, WebSocketSession>)state;
+            var sessions = (ConcurrentDictionary<Guid, WebSocketSession>) state;
 
             _sequencer.Add(() =>
             {
-                OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Sessions: {sessions.Count} - Sending broad ping...");
+                OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Active sessions: {sessions.Count.ToString()} - Sending BroadPing...");
                 foreach (var item in sessions)
                 {
                     SendAsync(item.Key, Constants.OpCode_Ping);
                 }
-                OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Sessions: {sessions.Count} - Sent broad ping.");
-
-                _broadPingTimer.Change(_broadPingTimerInterval, Timeout.InfiniteTimeSpan);
+                OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Active sessions: {sessions.Count.ToString()} - Sent BroadPing.");
             });
         }
 
         private void KillInactiveSessions(object state)
         {
-            var sessions = (ConcurrentDictionary<Guid, WebSocketSession>)state;
+            var sessions = (ConcurrentDictionary<Guid, WebSocketSession>) state;
 
             _sequencer.Add(() =>
             {
-                OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Sessions: {sessions.Count} - Sweeping dead sessions...");
-                foreach (var session in sessions)
+                try
                 {
-                    if (session.Value.PeriodFromLastPong >= InactivityTimeout)
-                    {
-                        WebSocketSession removed;
-                        _sessions.TryRemove(session.Key, out removed);
-                        OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Removing: {session.Key} - InActivityTimeout: {InactivityTimeout}");
-                        try { session.Value.Client.Close(); } catch { /* ignored */ }
-                        OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Removed: {session.Key}");
-                    }
-                }
-                OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Sessions: {sessions.Count} - Swept dead sessions.");
+                    OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Active sessions: {sessions.Count.ToString()} - Killing inactive sessions...");
 
-                _killInactiveTimer.Change(InactivityTimeout, Timeout.InfiniteTimeSpan);
+                    var deadSessionCount = 0;
+                    foreach (var session in sessions)
+                    {
+                        // session has recently been active, ignore
+                        if (session.Value.InactivityPeriod < InactivityTimeout) continue;
+
+                        deadSessionCount++;
+
+                        WebSocketSession removed;
+                        if (!_sessions.TryRemove(session.Key, out removed)) { continue; } // already removed
+
+                        OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Session: {session.Key.ToString()} inactive for a period of: {session.Value.InactivityPeriod.ToString()}");
+                        try { session.Value.Client.Close(); } catch { /* ignored */ }
+                        OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Session: {session.Key.ToString()} killed.");
+                    }
+                    OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Active sessions: {sessions.Count.ToString()} - Killed: {deadSessionCount.ToString()} inactive sessions.");
+                } finally
+                {
+                    _killInactiveTimer.Change(InactivityTimeout, Timeout.InfiniteTimeSpan);
+                }
             });
         }
 
@@ -106,7 +118,7 @@
                 return false;
             }
 
-            if (tmpSession.PeriodFromLastPong >= InactivityTimeout)
+            if (tmpSession.InactivityPeriod >= InactivityTimeout)
             {
                 WebSocketSession removed;
                 _sessions.TryRemove(id, out removed);
@@ -123,14 +135,14 @@
         {
             try
             {
-                OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Closing: {id}...");
+                OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Closing: {id.ToString()}...");
                 client.Close();
-                OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Closed: {id}.");
+                OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Closed: {id.ToString()}.");
             }
             finally
             {
                 client.Dispose();
-                OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Disposed: {id}.");
+                OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Disposed: {id.ToString()}.");
             }
         }
 
@@ -231,12 +243,12 @@
         {
             _sequencer.Add(() =>
             {
-                OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Attempting to close: {id}, ...");
+                OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Attempting to close: {id.ToString()}, ...");
 
                 WebSocketSession removed;
                 if (!_sessions.TryRemove(id, out removed))
                 {
-                    OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Attempting to close: {id}, Id not found in the sessions.");
+                    OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Attempting to close: {id.ToString()}, Id not found in the sessions.");
                     return;
                 }
 
@@ -250,8 +262,7 @@
         /// <param name="callback"></param>
         public void RegisterLogHandler(Action<string> callback)
         {
-            Ensure.NotNull(callback, nameof(callback));
-            OnLog = callback;
+            OnLog = Ensure.NotNull(callback, nameof(callback));
         }
 
         /// <summary>
@@ -260,7 +271,9 @@
         public void Dispose()
         {
             OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - SessionManager disposing...");
+
             _sequencer.Dispose();
+            _killInactiveTimer.Dispose();
             lock (_locker)
             {
                 foreach (var item in _sessions)

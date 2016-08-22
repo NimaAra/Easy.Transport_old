@@ -30,7 +30,7 @@
             ServerEvents.ShouldBeEmpty();
 
             _clients = Enumerable.Range(0, 3)
-                    .Select(n => new WebSocketClient(new Uri("ws://localhost:80/")))
+                    .Select(n => new WebSocketClient(new Uri("ws://localhost:80/"), TimeSpan.FromSeconds(10)))
                     .ToArray();
 
             _clientEvents = new ConcurrentQueue<WebSocketEventBase>();
@@ -64,7 +64,7 @@
         }
 
         [Test]
-        public async Task When_broadcating_a_ping() // [ToDo] fix
+        public void When_broadcating_a_ping() // [ToDo] fix
         {
 //            await Task.Delay(1000);
 //

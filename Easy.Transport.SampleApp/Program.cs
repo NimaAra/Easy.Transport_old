@@ -44,9 +44,15 @@
                     ((WebSocketServer)x).Manager.BroadcastAsync("Yoohooo!");
                 }, server, 10000, 5000);
 
+                // Disables timeout
+//                timer.Change(Timeout.Infinite, Timeout.Infinite);
+
                 var clients = Enumerable.Range(1, 3).Select(n =>
                 {
-                    var client = new WebSocketClient(new Uri("ws://localhost:11258"));
+                    // One of the clients will not send a ping in time
+                    var pingTimeout = n == 1 ? TimeSpan.FromSeconds(40) : TimeSpan.FromSeconds(15);
+
+                    var client = new WebSocketClient(new Uri("ws://localhost:11258"), pingTimeout);
                     client.OnEvent += (sender, eArg) => Console.WriteLine($"[Client] Id: {eArg.Id} - {eArg.Type}");
                     client.ConnectAsync();
                     return client;
