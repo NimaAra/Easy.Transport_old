@@ -9,7 +9,7 @@
     <projectUrl>https://github.com/NimaAra/Easy.Transport</projectUrl>    
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>An asynchronous high-performance and easy to use WebSocket server</description>
-    <releaseNotes>https://github.com/NimaAra/Easy.Transport</releaseNotes>
+    <releaseNotes>https://github.com/NimaAra/Easy.Transport/releases/tag/v1.0.0.0</releaseNotes>
     <copyright>Copyright 2016</copyright>
     <tags>WebSocket Easy Transport</tags>
   </metadata>
