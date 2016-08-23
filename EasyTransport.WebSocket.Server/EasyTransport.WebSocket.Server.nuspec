@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>Easy.Transport.WebSocket.Server</id>
+    <version>$version$</version>
+    <title>Easy Transport - WebSocket Server</title>
+    <authors>Nima Ara</authors>
+    <owners>Nima Ara</owners>    
+    <projectUrl>https://github.com/NimaAra/Easy.Transport</projectUrl>    
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>An asynchronous high-performance and easy to use WebSocket server</description>
+    <releaseNotes>https://github.com/NimaAra/Easy.Transport</releaseNotes>
+    <copyright>Copyright 2016</copyright>
+    <tags>WebSocket Easy Transport</tags>
+  </metadata>
+  <files>
+        <file src="bin\Release\EasyTransport.Common.dll" target="lib\net452\EasyTransport.Common.dll" />
+        <file src="bin\Release\EasyTransport.WebSocket.Server.dll" target="lib\net452\EasyTransport.WebSocket.Server.dll" />
+        <file src="bin\Release\EasyTransport.WebSocket.Server.XML" target="lib\net452\EasyTransport.WebSocket.Server.XML" />
+        <file src="bin\Release\System.Threading.Tasks.Dataflow.dll" target="lib\net452\System.Threading.Tasks.Dataflow.dll" />
+        <file src="bin\Release\System.Threading.Tasks.Dataflow.XML" target="lib\net452\System.Threading.Tasks.Dataflow.XML" />
+        <file src="bin\Release\vtortola.WebSockets.dll" target="lib\net452\vtortola.WebSockets.dll" />        
+        <file src="bin\Release\vtortola.WebSockets.Rfc6455.dll" target="lib\net452\vtortola.WebSockets.Rfc6455.dll" />        
+  </files>
+</package>

@@ -14,9 +14,8 @@
     <tags>WebSocket Easy Transport</tags>
   </metadata>
   <files>
-        <file src="bin\Release\EasyTransport.Common.dll" target="lib\net40\EasyTransport.Common.dll" />
-        <file src="bin\Release\EasyTransport.WebSocket.Client.dll" target="lib\net40\EasyTransport.WebSocket.Client.dll" />
-        <file src="bin\Release\EasyTransport.WebSocket.Client.XML" target="lib\net40\EasyTransport.WebSocket.Client.XML" />
-        <file src="bin\Release\WebSocket4Net.dll" target="lib\net40\WebSocket4Net.dll" />
+        <file src="bin\Release\EasyTransport.Common.dll" target="lib\net452\EasyTransport.Common.dll" />
+        <file src="bin\Release\EasyTransport.WebSocket.Client.dll" target="lib\net452\EasyTransport.WebSocket.Client.dll" />
+        <file src="bin\Release\EasyTransport.WebSocket.Client.XML" target="lib\net452\EasyTransport.WebSocket.Client.XML" />        
   </files>
 </package>
