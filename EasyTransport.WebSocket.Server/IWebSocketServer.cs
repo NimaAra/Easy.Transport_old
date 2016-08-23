@@ -11,6 +11,11 @@
     public interface IWebSocketServer : IDisposable
     {
         /// <summary>
+        /// Gets the timeout period at which any inactive session is closed.
+        /// </summary>
+        TimeSpan SessionInactivityTimeout { get; }
+        
+        /// <summary>
         /// Gets the endpoint to which clients will connect to.
         /// </summary>
         IPEndPoint EndPoint { get; }
@@ -29,5 +34,11 @@
         /// Starts the <see cref="IWebSocketServer"/>.
         /// </summary>
         Task StartAsync();
+
+        /// <summary>
+        /// Registers a call-back to invoke when the server has a log message.
+        /// </summary>
+        /// <param name="callback"></param>
+        void RegisterLogHandler(Action<string> callback);
     }
 }

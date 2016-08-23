@@ -2,6 +2,7 @@
 {
     using System.Collections.Generic;
     using System.Linq;
+    using System.Net;
     using System.Threading.Tasks;
     using EasyTransport.Common.Models.Events;
     using EasyTransport.WebSocket.Client;
@@ -55,22 +56,19 @@
             
             Server.Manager.Ids.Count.ShouldBe(1);
             var sessionIdAtServer = Server.Manager.Ids.Single();
-//            (await sessionAtTheServer.IsAlive).ShouldBeTrue();
-            // [ToDo] Add pinging...
 
             var connectedEvent = (ClientConnectedEvent)serverEvents.Dequeue();
 
             connectedEvent.Type.ShouldBe(WebSocketEventType.Connected);
             connectedEvent.Id.ShouldBe(sessionIdAtServer);
             connectedEvent.RemoteEndpoint.ShouldNotBeNull();
-            // [ToDo] proper test of remoteEndpoint
-
-            // [ToDo] get all query strings...
-//            connectedEvent.Session.QueryString.Count.ShouldBe(4);
-//            connectedEvent.Session.QueryString.ShouldContain(kv => kv.Key.StartsWith("client-req-id"));
-//            connectedEvent.Session.QueryString.ShouldContain(kv => kv.Key == "foo" && kv.Value == "Bar");
-//            connectedEvent.Session.QueryString.ShouldContain(kv => kv.Key == "near" && kv.Value == "far");
-//            connectedEvent.Session.QueryString.ShouldContain(kv => kv.Key == "there" && kv.Value == "here");
+            connectedEvent.RemoteEndpoint.Address.ShouldBe(IPAddress.Loopback);
+            connectedEvent.RemoteEndpoint.Port.ShouldNotBe(80, "It is some port opened by the server other than the one it's listening on.");
+            connectedEvent.QueryStrings.Count.ShouldBe(4);
+            connectedEvent.QueryStrings.ShouldContain(kv => kv.Key.StartsWith("client-req-id"));
+            connectedEvent.QueryStrings.ShouldContain(kv => kv.Key == "foo" && kv.Value == "Bar");
+            connectedEvent.QueryStrings.ShouldContain(kv => kv.Key == "near" && kv.Value == "far");
+            connectedEvent.QueryStrings.ShouldContain(kv => kv.Key == "there" && kv.Value == "here");
         }
     }
 }

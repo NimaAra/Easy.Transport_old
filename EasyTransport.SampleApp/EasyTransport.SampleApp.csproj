@@ -7,8 +7,8 @@
     <ProjectGuid>{B1E8FB74-B2D7-48DF-9A26-983BBE4A318C}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Easy.Transport.SampleApp</RootNamespace>
-    <AssemblyName>Easy.Transport.SampleApp</AssemblyName>
+    <RootNamespace>EasyTransport.SampleApp</RootNamespace>
+    <AssemblyName>EasyTransport.SampleApp</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>

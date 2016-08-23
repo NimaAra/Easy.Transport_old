@@ -23,20 +23,41 @@
         private readonly WebSocketListener _listener;
         private readonly CancellationTokenSource _cTokenSource;
         private readonly ProducerConsumerQueue<Action> _pcQueue;
+        private readonly Type _serverType;
+        private Action<string> _logCallback;
 
         /// <summary>
         /// Creates an instance of the <see cref="Server"/>.
         /// </summary>
         /// <param name="endpoint">The endpoint to which clients will connect to</param>
-        public WebSocketServer(IPEndPoint endpoint)
+        public WebSocketServer(IPEndPoint endpoint) : this(endpoint, TimeSpan.FromSeconds(30)) { }
+
+        /// <summary>
+        /// Creates an instance of the <see cref="Server"/>.
+        /// </summary>
+        /// <param name="endpoint">The endpoint to which clients will connect to</param>
+        /// <param name="sessionInactivityTimeout">The timeout at which any inactive session is closed</param>
+        public WebSocketServer(IPEndPoint endpoint, TimeSpan sessionInactivityTimeout)
         {
             EndPoint = Ensure.NotNull(endpoint, nameof(endpoint));
+            SessionInactivityTimeout = sessionInactivityTimeout;
 
             _listener = GetServer(endpoint);
             _cTokenSource = new CancellationTokenSource();
-            Manager = new WebSocketSessionManager(TimeSpan.FromSeconds(30));
+
+            Manager = new WebSocketSessionManager(SessionInactivityTimeout);
+
+            var sessionManagerType = Manager.GetType();
+            ((WebSocketSessionManager) Manager).OnLog += (sender, msg) => Log(sessionManagerType, msg);
+
             _pcQueue = new ProducerConsumerQueue<Action>(x => x(), (uint) Environment.ProcessorCount, 1000);
+            _serverType = GetType();
         }
+
+        /// <summary>
+        /// Gets the timeout period at which any inactive session is closed.
+        /// </summary>
+        public TimeSpan SessionInactivityTimeout { get; }
 
         /// <summary>
         /// Gets the endpoint to which clients will connect to.
@@ -63,10 +84,19 @@
         /// </summary>
         public Task StartAsync()
         {
-            ((WebSocketSessionManager)Manager).OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Server starting...");
+            Log(_serverType,  "Starting...");
             var cToken = _cTokenSource.Token;
             _listener.Start();
             return AcceptClientsAsync(_listener, cToken);
+        }
+
+        /// <summary>
+        /// Registers a call-back to invoke when the server has a log message.
+        /// </summary>
+        /// <param name="callback"></param>
+        public void RegisterLogHandler(Action<string> callback)
+        {
+            _logCallback = Ensure.NotNull(callback, nameof(callback));
         }
 
         /// <summary>
@@ -76,9 +106,7 @@
         {
             _cTokenSource.Cancel();
             _listener.Dispose();
-            ((WebSocketSessionManager)Manager).OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Server disposing...");
             ((WebSocketSessionManager)Manager).Dispose();
-            ((WebSocketSessionManager)Manager).OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Server disposed.");
             _pcQueue.Dispose();
             _cTokenSource.Dispose();
         }
@@ -109,7 +137,7 @@
             {
                 try
                 {
-                    ((WebSocketSessionManager)Manager).OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Server started.");
+                    Log(_serverType, "Started.");
 
                     while (!cToken.IsCancellationRequested)
                     {
@@ -124,7 +152,7 @@
                     OnError?.Invoke(new WebSocketServerException("Exception when accepting clients", e));
                 }
 
-                ((WebSocketSessionManager)Manager).OnLog?.Invoke($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Server stopped listening.");
+                Log(_serverType, "Stopped listening.");
             }, cToken, TaskCreationOptions.LongRunning | TaskCreationOptions.DenyChildAttach, TaskScheduler.Default);
         }
 
@@ -224,6 +252,11 @@
             {
                 writer.Write(Constants.OpCode_Pong, 0, Constants.OpCode_Pong.Length);
             }
+        }
+
+        private void Log(Type type, string msg)
+        {
+            _logCallback?.Invoke($"[UTC: {DateTime.UtcNow:HH:mm:ss.fff}] - [{type.Name}] | {msg}");
         }
     }
 }

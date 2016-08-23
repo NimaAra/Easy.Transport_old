@@ -22,7 +22,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyTransport.WebSocket.Cli
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyTransport.WebSocket.Server", "EasyTransport.WebSocket.Server\EasyTransport.WebSocket.Server.csproj", "{8F9C5A57-F4AA-44B2-8013-AE91A7E0FF13}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Easy.Transport.SampleApp", "Easy.Transport.SampleApp\Easy.Transport.SampleApp.csproj", "{B1E8FB74-B2D7-48DF-9A26-983BBE4A318C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyTransport.SampleApp", "EasyTransport.SampleApp\EasyTransport.SampleApp.csproj", "{B1E8FB74-B2D7-48DF-9A26-983BBE4A318C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

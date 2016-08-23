@@ -50,7 +50,7 @@
                     }
                 };
 
-                server.Manager.RegisterLogHandler(msg => Console.WriteLine("Server -> " + msg));
+                server.RegisterLogHandler(msg => Console.WriteLine("Server -> " + msg));
 
                 await server.StartAsync();
 
@@ -101,7 +101,7 @@
                 Console.WriteLine($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Disposing clients...");
                 Array.ForEach(clients, c =>
                 {
-                    //c.Dispose();
+                    c.Dispose();
                 });
                 Console.WriteLine($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Disposed clients.");
 

@@ -51,41 +51,6 @@
             {
                 client.State.ShouldBe(WebSocketClientState.Connected);
             }
-
-            // [ToDo] fix
-//            foreach (var session in Server.Manager.AllSessions)
-//            {
-//                (await session.IsAlive).ShouldBeTrue();
-//                session.IsSecure.ShouldBeFalse();
-//                session.State.ShouldBe(State.Connected);
-//                session.IsAuthenticated.ShouldBeFalse();
-//                session.ClientEndpoint.Address.ShouldBe(IPAddress.Loopback);
-//            }
-        }
-
-        [Test]
-        public void When_broadcating_a_ping() // [ToDo] fix
-        {
-//            await Task.Delay(1000);
-//
-//            _clientEvents.Count.ShouldBe(6);
-//            _clientEvents.OfType<ConnectingEvent>().Count().ShouldBe(3);
-//            _clientEvents.OfType<ConnectedEvent>().Count().ShouldBe(3);
-//
-//            var pingResult = await Server.Manager.BroadPingAsync();
-//            await Task.Delay(1000);
-//
-//            pingResult.Count.ShouldBe(_clients.Length);
-//
-//            foreach (var pair in pingResult)
-//            {
-//                _clients.ShouldContain(c => c.Id == pair.Key.Id);
-//                pair.Value.ShouldBeTrue();
-//            }
-//
-//            _clientEvents.Count.ShouldBe(6);
-//            _clientEvents.OfType<ClientPayloadEvent>().ShouldBeEmpty();
-//            Array.ForEach(_clients, c => c.Dispose());
         }
 
         [Test]

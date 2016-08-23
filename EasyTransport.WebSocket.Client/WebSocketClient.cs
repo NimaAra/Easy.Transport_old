@@ -44,7 +44,7 @@
 
             Id = Guid.NewGuid();
             AutoReconnect = autoReconnect;
-            IsSecure = scheme.Equals("WSS", CmpPolicy); // [ToDo] Implement
+            IsSecure = scheme.Equals("WSS", CmpPolicy);
             Endpoint = endpoint.AddParametersToQueryString(Constants.ClientRequestedIdKey, Id.ToString());
             PingInterval = pingInterval;
             _pingTimer = new Timer(state => { Ping(); }, null, Timeout.Infinite, Timeout.Infinite);
@@ -75,6 +75,8 @@
         {
             get
             {
+                Ensure.Not<ObjectDisposedException>(_disposing, "Client has been disposed.");
+
                 switch (_client.State)
                 {
                     case WebSocketState.None:
@@ -122,10 +124,9 @@
         /// </summary>
         public Task ConnectAsync()
         {
-            if (State != WebSocketClientState.Disconnected)
-            {
-                return _tcs.Task;
-            }
+            Ensure.Not<ObjectDisposedException>(_disposing, "Client has been disposed.");
+
+            if (State != WebSocketClientState.Disconnected) { return _tcs.Task;  }
 
             ConnectImpl();
             return _tcs.Task;
@@ -136,6 +137,8 @@
         /// </summary>
         public void Send(string data)
         {
+            Ensure.Not<ObjectDisposedException>(_disposing, "Client has been disposed.");
+
             _waitHandle.Wait();
             _client.Send(data);
         }
@@ -145,6 +148,8 @@
         /// </summary>
         public void Send(byte[] data)
         {
+            Ensure.Not<ObjectDisposedException>(_disposing, "Client has been disposed.");
+
             _waitHandle.Wait();
             _client.Send(data, 0, data.Length);
         }
@@ -154,6 +159,8 @@
         /// </summary>
         public void Send(Stream data)
         {
+            Ensure.Not<ObjectDisposedException>(_disposing, "Client has been disposed.");
+
             var buffer = new byte[data.Length];
             var read = data.ReadAsync(buffer, 0, buffer.Length).Result; // [ToDo] make async
 
@@ -161,6 +168,7 @@
                 read == buffer.Length,
                 $"The bytes read does not match length of data, read: {read} source: {buffer.Length}");
 
+            Ensure.Not<ObjectDisposedException>(_disposing, "Client has been disposed.");
             _waitHandle.Wait();
             _client.Send(buffer, 0, read);
         }
@@ -208,8 +216,9 @@
                 OnEvent?.Invoke(this, new ErrorEvent(Id, args.Exception, args.Exception.Message));
             };
 
-            client.MessageReceived +=
-                (sender, args) => OnEvent?.Invoke(this, new PayloadEvent(Id, PayloadType.Text, args.Message, null));
+            client.MessageReceived += (sender, args) => 
+                OnEvent?.Invoke(this, new PayloadEvent(Id, PayloadType.Text, args.Message, null));
+
             client.DataReceived += (sender, args) =>
             {
                 if (args.Data.IsPing()) { Pong(); }
@@ -242,10 +251,7 @@
 
         private void HandleReconnect()
         {
-            if (_disposing || !AutoReconnect)
-            {
-                return;
-            }
+            if (_disposing || !AutoReconnect) { return; }
             ConnectImpl();
         }
 

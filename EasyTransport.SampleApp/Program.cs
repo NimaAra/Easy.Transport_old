@@ -1,4 +1,4 @@
-﻿namespace Easy.Transport.SampleApp
+﻿namespace EasyTransport.SampleApp
 {
     using System;
     using System.Linq;
@@ -15,12 +15,12 @@
         {
             using (var server = new WebSocketServer(new IPEndPoint(IPAddress.Loopback, 11258)))
             {
-                server.OnError = exception => Console.WriteLine($"[{DateTime.UtcNow:HH:mm:ss.fff}] - [Error] - {exception}");
+                server.OnError = exception => Console.WriteLine($"[UTC: {DateTime.UtcNow:HH:mm:ss.fff}] - [Error] - {exception}");
                 server.OnEvent += (sender, eArg) =>
                 {
                     if (eArg.Type == WebSocketEventType.Connected)
                     {
-                        Console.WriteLine($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Connected: {eArg.Id} From: {((ClientConnectedEvent) eArg).RemoteEndpoint}");
+                        Console.WriteLine($"[UTC: {DateTime.UtcNow:HH:mm:ss.fff}] - Connected: {eArg.Id} From: {((ClientConnectedEvent) eArg).RemoteEndpoint}");
                     } else if (eArg.Type == WebSocketEventType.Payload)
                     {
                         var payloadEvent = (PayloadEvent) eArg;
@@ -28,14 +28,14 @@
                             ? payloadEvent.Text
                             : Encoding.UTF8.GetString(payloadEvent.Bytes);
 
-                        Console.WriteLine($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Payload From: {eArg.Id} - Msg: {msg}");
+                        Console.WriteLine($"[UTC: {DateTime.UtcNow:HH:mm:ss.fff}] - Payload From: {eArg.Id} - Msg: {msg}");
                     } else
                     {
-                        Console.WriteLine($"[{DateTime.UtcNow:HH:mm:ss.fff}] - Event: {eArg.Type} From: {eArg.Id}");
+                        Console.WriteLine($"[UTC: {DateTime.UtcNow:HH:mm:ss.fff}] - Event: {eArg.Type} From: {eArg.Id}");
                     }
                 };
 
-                server.Manager.RegisterLogHandler(msg => Console.WriteLine($"[Server -> {msg}"));
+                server.RegisterLogHandler(msg => Console.WriteLine($"[Server -> {msg}"));
 
                 server.StartAsync();
 
@@ -53,7 +53,7 @@
                     var pingTimeout = n == 1 ? TimeSpan.FromSeconds(40) : TimeSpan.FromSeconds(15);
 
                     var client = new WebSocketClient(new Uri("ws://localhost:11258"), pingTimeout);
-                    client.OnEvent += (sender, eArg) => Console.WriteLine($"[Client] Id: {eArg.Id} - {eArg.Type}");
+                    client.OnEvent += (sender, eArg) => Console.WriteLine($"[UTC: {DateTime.UtcNow:HH:mm:ss.fff}] - [Client] Id: {eArg.Id} - {eArg.Type}");
                     client.ConnectAsync();
                     return client;
                 }).ToArray();
@@ -61,10 +61,10 @@
                 Console.ReadLine();
                 GC.KeepAlive(timer);
                 Array.ForEach(clients, c => c.Dispose());
-                Console.WriteLine("Server stopping...");
+                Console.WriteLine($"[UTC: {DateTime.UtcNow:HH:mm:ss.fff}] - Server stopping...");
             }
 
-            Console.WriteLine("Server stopped.");
+            Console.WriteLine($"[UTC: {DateTime.UtcNow:HH:mm:ss.fff}] - Server stopped.");
         }
     }
 }

@@ -43,9 +43,6 @@
             Server.Manager.Ids.Count.ShouldBe(1);
             var sessionIdAtServer = Server.Manager.Ids.Single();
 
-            // [ToDo] Add is alive
-            //(await sessionAtTheServer.IsAlive).ShouldBeTrue();
-            
             var connectedEvent = (ClientConnectedEvent)serverEvents.Dequeue();
 
             connectedEvent.Type.ShouldBe(WebSocketEventType.Connected);
