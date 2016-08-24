@@ -86,7 +86,7 @@
 
             _sequencer.Add(() =>
             {
-                OnLog?.Invoke(this, $"ActiveSessions: {sessions.Count.ToString()} - Killing inactive sessions...");
+                OnLog?.Invoke(this, $"ActiveSessions: {sessions.Count.ToString()} - Killing InactiveSession...");
                 var deadSessionCount = 0;
                 foreach (var session in sessions)
                 {

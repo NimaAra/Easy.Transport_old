@@ -52,6 +52,10 @@
             connectedEvent.RemoteEndpoint.Port.ShouldNotBe(80, "It is some port opened by the server other than the one it's listening on.");
             connectedEvent.QueryStrings.Count.ShouldBe(1);
             connectedEvent.QueryStrings.Single().Key.ShouldBe(Constants.ClientRequestedIdKey);
+
+            Client.Dispose();
+
+            Client.State.ShouldBe(WebSocketClientState.Disconnected);
         }
     }
 }

@@ -75,7 +75,7 @@
         {
             get
             {
-                Ensure.Not<ObjectDisposedException>(_disposing, "Client has been disposed.");
+                if (_disposing) { return WebSocketClientState.Disconnected; }
 
                 switch (_client.State)
                 {
