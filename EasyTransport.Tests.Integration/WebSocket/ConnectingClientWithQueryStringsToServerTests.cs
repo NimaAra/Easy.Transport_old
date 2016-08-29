@@ -31,7 +31,7 @@
 
             var queryString = string.Join("&", parameters.Select(kv => kv.Key + "=" + kv.Value));
 
-            var uri = "ws://localhost:80/?" + queryString;
+            var uri = "ws://localhost:11859/?" + queryString;
             Given_a_websocket_client(uri);
         }
 

@@ -23,13 +23,13 @@
 
         protected void Given_a_websocket_server()
         {
-            var endpoint = new IPEndPoint(IPAddress.Loopback, 80);
+            var endpoint = new IPEndPoint(IPAddress.Loopback, 11859);
             Server = new WebSocketServer(endpoint);
 
             Server.OnEvent += OnServerEvent;
         }
 
-        protected void Given_a_websocket_client(string endpoint = "ws://localhost:80/")
+        protected void Given_a_websocket_client(string endpoint = "ws://localhost:11859/")
         {
             Client = new WebSocketClient(new Uri(endpoint), TimeSpan.FromSeconds(10));
 

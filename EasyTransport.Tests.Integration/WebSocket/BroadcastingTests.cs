@@ -30,7 +30,7 @@
             ServerEvents.ShouldBeEmpty();
 
             _clients = Enumerable.Range(0, 3)
-                    .Select(n => new WebSocketClient(new Uri("ws://localhost:80/"), TimeSpan.FromSeconds(10)))
+                    .Select(n => new WebSocketClient(new Uri("ws://localhost:11859/"), TimeSpan.FromSeconds(10)))
                     .ToArray();
 
             _clientEvents = new ConcurrentQueue<WebSocketEventBase>();
