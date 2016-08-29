@@ -64,22 +64,22 @@
             Should.Throw<SocketException>(async () => await client.ConnectAsync())
                 .Message.ShouldBe("No such host is known");
 
-            client.State.ShouldBe(WebSocketClientState.Connecting);
+            client.State.ShouldBe(WebSocketClientState.Connecting, "Because client has just started connecting");
 
             await Task.Delay(5000);
 
-            eventsQueue.Count.ShouldBeGreaterThanOrEqualTo(4);
+            eventsQueue.Count.ShouldBeGreaterThanOrEqualTo(4, "Because client should have attempted to reconnect");
 
             var events = eventsQueue.ToArray();
 
-            events[0].ShouldBeOfType(typeof(ConnectingEvent));
-            events[0].Id.ShouldBe(client.Id);
-            events[0].Type.ShouldBe(WebSocketEventType.Connecting);
+            events[0].ShouldBeOfType(typeof(ConnectingEvent), "Because the first event type should have been connecting");
+            events[0].Id.ShouldBe(client.Id, "Because the event should have included the client Id");
+            events[0].Type.ShouldBe(WebSocketEventType.Connecting, "Because the first event should have been connecting");
 
             var errorEventOne = events[1] as ErrorEvent;
             errorEventOne.ShouldNotBeNull();
             errorEventOne.Id.ShouldBe(client.Id);
-            errorEventOne.Type.ShouldBe(WebSocketEventType.Error);
+            errorEventOne.Type.ShouldBe(WebSocketEventType.Error, "Because the client was unable to connect to the endpoint");
             errorEventOne.ErrorMessage.ShouldBe("No such host is known");
             errorEventOne.Exception.ShouldBeOfType<SocketException>()
                 .Message.ShouldBe("No such host is known");
@@ -87,13 +87,13 @@
             var disconnectEventOne = events[2] as DisconnectedEvent;
             disconnectEventOne.ShouldNotBeNull();
             disconnectEventOne.Id.ShouldBe(client.Id);
-            disconnectEventOne.Type.ShouldBe(WebSocketEventType.Disconnected);
+            disconnectEventOne.Type.ShouldBe(WebSocketEventType.Disconnected, "Because the client was disconnected");
             disconnectEventOne.Reason.ShouldBe("ConnectionRefused");
 
             var reconnectEvent = events[3] as ConnectingEvent;
             reconnectEvent.ShouldNotBeNull();
             reconnectEvent.Id.ShouldBe(client.Id);
-            reconnectEvent.Type.ShouldBe(WebSocketEventType.Connecting);
+            reconnectEvent.Type.ShouldBe(WebSocketEventType.Connecting, "Because client should have attempted to connect again");
 
             client.Dispose();
             await Task.Delay(5000);
