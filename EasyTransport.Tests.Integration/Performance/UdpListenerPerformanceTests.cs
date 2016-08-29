@@ -15,6 +15,7 @@
     internal sealed class UdpListenerPerformanceTests
     {
         [Test]
+        [Ignore("Performance only")]
         public async Task Run()
         {
             const int ClientCount = 100;

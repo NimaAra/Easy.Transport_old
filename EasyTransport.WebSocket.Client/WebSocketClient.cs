@@ -8,6 +8,7 @@
     using Easy.Common.Extensions;
     using EasyTransport.Common;
     using EasyTransport.Common.Extensions;
+    using EasyTransport.Common.Models;
     using EasyTransport.Common.Models.Events;
     using WebSocket4Net;
     using WebSocket = WebSocket4Net.WebSocket;
@@ -241,7 +242,7 @@
 
                 var disconnectEvent = justifiedClose != null
                     ? new DisconnectedEvent(Id, justifiedClose.Code, justifiedClose.Reason)
-                    : new DisconnectedEvent(Id, 10061);
+                    : new DisconnectedEvent(Id, 10061, ErrorCodes.StatusCodeToReasonMap[10061]);
 
                 OnEvent?.Invoke(this, disconnectEvent);
 

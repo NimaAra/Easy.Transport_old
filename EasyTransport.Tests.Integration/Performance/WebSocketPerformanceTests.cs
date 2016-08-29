@@ -17,6 +17,7 @@
     internal sealed class WebSocketPerformanceTests
     {
         [Test]
+        [Ignore("Performance only")]
         public async Task Run()
         {
             await When_sending_messages_from_multiple_clients();
