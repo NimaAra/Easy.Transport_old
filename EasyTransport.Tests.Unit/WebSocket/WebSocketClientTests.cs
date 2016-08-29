@@ -64,6 +64,8 @@
             Should.Throw<SocketException>(async () => await client.ConnectAsync())
                 .Message.ShouldBe("No such host is known");
 
+            await Task.Delay(300);
+
             client.State.ShouldBe(WebSocketClientState.Connecting, "Because client has just started connecting");
 
             await Task.Delay(5000);
