@@ -55,7 +55,8 @@
             var eventsQueue = new ConcurrentQueue<WebSocketEventBase>();
             client.OnEvent += (sender, eArg) =>
             {
-                Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}] | Client | {eArg}");
+                var localCopy = client;
+                Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}] | Client | {eArg} - AutoConnect: {localCopy.AutoReconnect}");
                 eventsQueue.Enqueue(eArg);
             };
             client.State.ShouldBe(WebSocketClientState.Disconnected);
@@ -116,7 +117,8 @@
             var eventsQueue = new ConcurrentQueue<WebSocketEventBase>();
             client.OnEvent += (sender, eArg) =>
             {
-                Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}] | Client | {eArg}");
+                var localCopy = client;
+                Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}] | Client | {eArg} - AutoConnect: {localCopy.AutoReconnect}");
                 eventsQueue.Enqueue(eArg);
             };
             client.State.ShouldBe(WebSocketClientState.Disconnected);
