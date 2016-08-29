@@ -56,7 +56,7 @@
             client.OnEvent += (sender, eArg) =>
             {
                 var localCopy = client;
-                Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}] | Client | {eArg} - AutoConnect: {localCopy.AutoReconnect}");
+                Console.WriteLine($"[{DateTime.UtcNow:HH:mm:ss.fff}] - [{Thread.CurrentThread.ManagedThreadId}] | Client | {eArg} - AutoConnect: {localCopy.AutoReconnect}");
                 eventsQueue.Enqueue(eArg);
             };
             client.State.ShouldBe(WebSocketClientState.Disconnected);
@@ -68,7 +68,7 @@
 
             await Task.Delay(5000);
 
-            eventsQueue.Count.ShouldBeGreaterThanOrEqualTo(6);
+            eventsQueue.Count.ShouldBeGreaterThanOrEqualTo(4);
 
             var events = eventsQueue.ToArray();
 
@@ -116,7 +116,7 @@
             client.OnEvent += (sender, eArg) =>
             {
                 var localCopy = client;
-                Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}] | Client | {eArg} - AutoConnect: {localCopy.AutoReconnect}");
+                Console.WriteLine($"[{DateTime.UtcNow:HH:mm:ss.fff}] - [{Thread.CurrentThread.ManagedThreadId}] | Client | {eArg} - AutoConnect: {localCopy.AutoReconnect}");
                 eventsQueue.Enqueue(eArg);
             };
             client.State.ShouldBe(WebSocketClientState.Disconnected);
