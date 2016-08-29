@@ -68,8 +68,6 @@
 
             await Task.Delay(5000);
 
-            client.State.ShouldBe(WebSocketClientState.Connecting);
-
             eventsQueue.Count.ShouldBeGreaterThanOrEqualTo(6);
 
             var events = eventsQueue.ToArray();
