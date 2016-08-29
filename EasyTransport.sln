@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyTransport.Common", "Eas
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{FBE15A69-7286-47EA-844B-81AF6F34CFEB}"
 	ProjectSection(SolutionItems) = preProject
+		EasyTransport.WebSocket.Client\EasyTransport.WebSocket.Client.nuspec = EasyTransport.WebSocket.Client\EasyTransport.WebSocket.Client.nuspec
+		EasyTransport.WebSocket.Server\EasyTransport.WebSocket.Server.nuspec = EasyTransport.WebSocket.Server\EasyTransport.WebSocket.Server.nuspec
 		Version.cs = Version.cs
 	EndProjectSection
 EndProject

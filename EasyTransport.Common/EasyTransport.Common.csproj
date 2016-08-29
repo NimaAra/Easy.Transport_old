@@ -30,6 +30,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Easy.Common, Version=1.0.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Easy.Common.1.0.1\lib\net452\Easy.Common.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
   </ItemGroup>
@@ -39,10 +43,6 @@
     </Compile>
     <Compile Include="Constants.cs" />
     <Compile Include="Extensions\ByteExtensions.cs" />
-    <Compile Include="Extensions\StringExtensions.cs" />
-    <Compile Include="Extensions\TaskExtensions.cs" />
-    <Compile Include="Extensions\UriExtensions.cs" />
-    <Compile Include="Helpers\Ensure.cs" />
     <Compile Include="Models\ErrorCodes.cs" />
     <Compile Include="Models\Events\ConnectedEvent.cs" />
     <Compile Include="Models\Events\ConnectingEvent.cs" />
@@ -52,10 +52,11 @@
     <Compile Include="Models\Events\PayloadType.cs" />
     <Compile Include="Models\Events\WebSocketEventBase.cs" />
     <Compile Include="Models\Events\WebSocketEventType.cs" />
-    <Compile Include="ProducerConsumerQueue.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -6,6 +6,7 @@
     using System.IO;
     using System.Linq;
     using System.Threading;
+    using Easy.Common;
     using EasyTransport.Common;
     using vtortola.WebSockets;
 
@@ -266,7 +267,7 @@
         {
             OnLog?.Invoke(this, "SessionManager disposing...");
 
-            _sequencer.Dispose();
+            _sequencer.ShutdownAsync(TimeSpan.Zero).Wait();
             _killInactiveTimer.Dispose();
             lock (_locker)
             {

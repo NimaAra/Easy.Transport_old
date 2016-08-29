@@ -8,9 +8,10 @@
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
+    using Easy.Common;
+    using Easy.Common.Extensions;
     using EasyTransport.Common;
     using EasyTransport.Common.Extensions;
-    using EasyTransport.Common.Helpers;
     using EasyTransport.Common.Models.Events;
     using vtortola.WebSockets;
     using vtortola.WebSockets.Rfc6455;
@@ -30,19 +31,22 @@
         /// Creates an instance of the <see cref="Server"/>.
         /// </summary>
         /// <param name="endpoint">The endpoint to which clients will connect to</param>
-        public WebSocketServer(IPEndPoint endpoint) : this(endpoint, TimeSpan.FromSeconds(30)) { }
+        /// <param name="subProtocols">The sub-protocols supported by the <see cref="WebSocketServer"/></param>
+        public WebSocketServer(IPEndPoint endpoint, params string[] subProtocols) 
+            : this(endpoint, TimeSpan.FromSeconds(30), subProtocols) { }
 
         /// <summary>
         /// Creates an instance of the <see cref="Server"/>.
         /// </summary>
         /// <param name="endpoint">The endpoint to which clients will connect to</param>
         /// <param name="sessionInactivityTimeout">The timeout at which any inactive session is closed</param>
-        public WebSocketServer(IPEndPoint endpoint, TimeSpan sessionInactivityTimeout)
+        /// <param name="subProtocols">The sub-protocols supported by the <see cref="WebSocketServer"/></param>
+        public WebSocketServer(IPEndPoint endpoint, TimeSpan sessionInactivityTimeout, params string[] subProtocols)
         {
             EndPoint = Ensure.NotNull(endpoint, nameof(endpoint));
             SessionInactivityTimeout = sessionInactivityTimeout;
 
-            _listener = GetServer(endpoint);
+            _listener = GetServer(endpoint, subProtocols);
             _cTokenSource = new CancellationTokenSource();
 
             Manager = new WebSocketSessionManager(SessionInactivityTimeout);
@@ -107,12 +111,17 @@
             _cTokenSource.Cancel();
             _listener.Dispose();
             ((WebSocketSessionManager)Manager).Dispose();
-            _pcQueue.Dispose();
+            _pcQueue.ShutdownAsync(TimeSpan.Zero).Wait();
             _cTokenSource.Dispose();
         }
 
-        private static WebSocketListener GetServer(IPEndPoint endpoint)
+        private static WebSocketListener GetServer(IPEndPoint endpoint, params string[] subProtocols)
         {
+            if (subProtocols == null || !subProtocols.Any())
+            {
+                subProtocols = new[] {Constants.Protocol};
+            }
+
             var timeout = TimeSpan.FromSeconds(3);
             var options = new WebSocketListenerOptions
             {
@@ -122,7 +131,7 @@
                 PingTimeout = Timeout.InfiniteTimeSpan,
                 PingMode = PingModes.BandwidthSaving,
                 UseNagleAlgorithm = true,
-                SubProtocols = new [] {"basic"}
+                SubProtocols = subProtocols
             };
 
             var server = new WebSocketListener(endpoint, options);

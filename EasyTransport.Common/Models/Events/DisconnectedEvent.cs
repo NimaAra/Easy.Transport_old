@@ -2,7 +2,7 @@
 {
     using System;
     using System.Diagnostics;
-    using EasyTransport.Common.Extensions;
+    using Easy.Common.Extensions;
     using EasyTransport.Common.Models;
 
     /// <summary>

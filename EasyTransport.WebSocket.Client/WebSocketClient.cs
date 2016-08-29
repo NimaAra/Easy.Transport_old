@@ -4,9 +4,10 @@
     using System.IO;
     using System.Threading;
     using System.Threading.Tasks;
+    using Easy.Common;
+    using Easy.Common.Extensions;
     using EasyTransport.Common;
     using EasyTransport.Common.Extensions;
-    using EasyTransport.Common.Helpers;
     using EasyTransport.Common.Models.Events;
     using WebSocket4Net;
     using WebSocket = WebSocket4Net.WebSocket;
@@ -33,7 +34,10 @@
         /// <param name="autoReconnect">
         /// The flag indicating whether the <see cref="WebSocketClient"/> should attempt to automatically reconnect.
         /// </param>
-        public WebSocketClient(Uri endpoint, TimeSpan pingInterval, bool autoReconnect = false)
+        /// <param name="subProtocol">
+        /// The sub-protocol supported by the server.
+        /// </param>
+        public WebSocketClient(Uri endpoint, TimeSpan pingInterval, bool autoReconnect = false, string subProtocol = "")
         {
             Ensure.NotNull(endpoint, nameof(endpoint));
 
@@ -42,6 +46,8 @@
             Ensure.That(scheme.Equals("WS", CmpPolicy) || scheme.Equals("WSS", CmpPolicy),
                 $"The endpoint: {endpoint.AbsoluteUri} is invalid, endpoint's scheme should be one of `ws` or `wss`");
 
+            if (subProtocol.IsNullOrEmptyOrWhiteSpace()) { subProtocol = Constants.Protocol; }
+
             Id = Guid.NewGuid();
             AutoReconnect = autoReconnect;
             IsSecure = scheme.Equals("WSS", CmpPolicy);
@@ -49,7 +55,7 @@
             PingInterval = pingInterval;
             _pingTimer = new Timer(state => { Ping(); }, null, Timeout.Infinite, Timeout.Infinite);
 
-            _client = new WebSocket(Endpoint.AbsoluteUri, "basic", userAgent: "Easy.Transport",
+            _client = new WebSocket(Endpoint.AbsoluteUri, subProtocol, userAgent: Constants.Protocol,
                 version: WebSocketVersion.Rfc6455)
             {
                 AllowUnstrustedCertificate = false,

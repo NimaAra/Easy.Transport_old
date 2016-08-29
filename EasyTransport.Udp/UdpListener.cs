@@ -4,7 +4,7 @@
     using System.Net.Sockets;
     using System.Threading;
     using System.Threading.Tasks;
-    using EasyTransport.Common.Extensions;
+    using Easy.Common.Extensions;
 
     /// <summary>
     /// Represents a <c>UDP</c> listener.
