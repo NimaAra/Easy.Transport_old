@@ -43,7 +43,6 @@
         }
 
         [Test]
-        [Ignore("Needs to be simplified")]
         public async Task When_creating_a_client_connecting_to_non_existing_endpoint_with_autoconnect()
         {
             var client = new WebSocketClient(new Uri("ws://somewhere:80/Foo"), TimeSpan.FromSeconds(10), true);
@@ -64,6 +63,8 @@
 
             Should.Throw<SocketException>(async () => await client.ConnectAsync())
                 .Message.ShouldBe("No such host is known");
+
+            await Task.Delay(300);
 
             client.State.ShouldBe(WebSocketClientState.Connecting, "Because client has just started connecting");
 
