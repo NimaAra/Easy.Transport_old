@@ -32,7 +32,9 @@
                 throw new WebSocketServerException("Internal error", exception);
             };
 
-            _killInactiveTimer = new Timer(KillInactiveSessions, _sessions, _sessionsSweepInternval, Timeout.InfiniteTimeSpan);
+            _killInactiveTimer = InactivityTimeout == TimeSpan.MaxValue 
+                ? new Timer(KillInactiveSessions, _sessions, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan) 
+                : new Timer(KillInactiveSessions, _sessions, _sessionsSweepInternval, Timeout.InfiniteTimeSpan);
         }
 
         internal event EventHandler<string> OnLog; 
@@ -267,7 +269,7 @@
         {
             OnLog?.Invoke(this, "SessionManager disposing...");
 
-            _sequencer.ShutdownAsync(TimeSpan.Zero).Wait();
+            _sequencer.Shutdown(TimeSpan.Zero);
             _killInactiveTimer.Dispose();
             lock (_locker)
             {

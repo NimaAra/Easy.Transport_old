@@ -111,7 +111,7 @@
             _cTokenSource.Cancel();
             _listener.Dispose();
             ((WebSocketSessionManager)Manager).Dispose();
-            _pcQueue.ShutdownAsync(TimeSpan.Zero).Wait();
+            _pcQueue.Shutdown(TimeSpan.Zero);
             _cTokenSource.Dispose();
         }
 
