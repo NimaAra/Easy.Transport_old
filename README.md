@@ -4,7 +4,8 @@ ___
 
 # Coming soon...
 
-* NuGet WebSocket Server at: https://www.nuget.org/packages/Easy.Transport.WebSocket.Server/
-* NuGet WebSocket Client at: https://www.nuget.org/packages/Easy.Transport.WebSocket.Client/
+#### NuGets:
+* [**WebSocket Server**](https://www.nuget.org/packages/Easy.Transport.WebSocket.Server/)
+* [**WebSocket Client**](https://www.nuget.org/packages/Easy.Transport.WebSocket.Client/)
 
 
